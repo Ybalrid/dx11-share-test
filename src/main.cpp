@@ -5,6 +5,8 @@
 
 #include <d3d11.h>
 
+#define ReleaseIfNotNull(ComObj) if(ComObj) ComObj->Release(); ComObj = nullptr
+
 int main(int argc, char** argv)
 {
 	printf("This program creates a window, then two DirectX devices." "\n");
@@ -98,7 +100,7 @@ int main(int argc, char** argv)
 	HANDLE shareHandle = nullptr;
 	const auto handleObtained = shareSourceResource->GetSharedHandle(&shareHandle);
 	printf("handleObtained = %d\n", handleObtained);
-	shareSourceResource->Release();
+	ReleaseIfNotNull(shareSourceResource);
 
 	printf("If the DirectX implementation is patched DXVK, goal is that this handle is a UNIX FD that can be given back to DXVK and openned as a vulkan texture" "\n");
 	printf("shareHandle = %llu\n", reinterpret_cast<uintptr_t>(shareHandle));
@@ -129,14 +131,14 @@ int main(int argc, char** argv)
 	}
 
 	// Close everything initialized via Direct3D 11
-	if(handleObtained == S_OK && sharedDest != nullptr)
-		sharedDest->Release(); // This would crash under DXVK where the openning of the texture fails.
-	shareSource->Release();
-	pDeviceContextWindow->Release();
-	pSwapchain->Release();
-	pDeviceWindow->Release();
-	pDeviceHeadlessContext->Release();
-	pDeviceHeadless->Release();
+	if(handleObtained == S_OK)
+		ReleaseIfNotNull(sharedDest); // This would crash under DXVK where the openning of the texture fails.
+	ReleaseIfNotNull(shareSource);
+	ReleaseIfNotNull(pDeviceContextWindow);
+	ReleaseIfNotNull(pSwapchain);
+	ReleaseIfNotNull(pDeviceWindow);
+	ReleaseIfNotNull(pDeviceHeadlessContext);
+	ReleaseIfNotNull(pDeviceHeadless);
 
 	// Close everything initialized via SDL
 	SDL_DestroyWindow(window);
