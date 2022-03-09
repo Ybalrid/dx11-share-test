@@ -101,9 +101,9 @@ int main(int argc, char** argv)
 	shareSourceResource->Release();
 
 	printf("If the DirectX implementation is patched DXVK, goal is that this handle is a UNIX FD that can be given back to DXVK and openned as a vulkan texture" "\n");
-	printf("shareHandle = %llu\n", shareHandle);
-	printf("shareHandle as int ptr deref = %d\n", *(int*) & shareHandle);
-	printf("shareHandle as uint ptr deref = %u\n", *(unsigned int*) & shareHandle);
+	printf("shareHandle = %llu\n", reinterpret_cast<uintptr_t>(shareHandle));
+	printf("shareHandle as int ptr deref = %d\n", *reinterpret_cast<int*>(&shareHandle));
+	printf("shareHandle as uint ptr deref = %u\n", *reinterpret_cast<unsigned*>(&shareHandle));
 
 	ID3D11Texture2D* sharedDest = nullptr;
 	const auto handleOpenned = pDeviceWindow->OpenSharedResource(shareHandle,
@@ -123,11 +123,14 @@ int main(int argc, char** argv)
 		case SDL_QUIT:
 			running = false;
 			break;
+		default:
+			break;
 		}
 	}
 
-	//Close everything initalized via Direct3D 11
-	sharedDest->Release();
+	// Close everything initialized via Direct3D 11
+	if(handleObtained == S_OK && sharedDest != nullptr)
+		sharedDest->Release(); // This would crash under DXVK where the openning of the texture fails.
 	shareSource->Release();
 	pDeviceContextWindow->Release();
 	pSwapchain->Release();
@@ -135,7 +138,7 @@ int main(int argc, char** argv)
 	pDeviceHeadlessContext->Release();
 	pDeviceHeadless->Release();
 
-	//Close everything initialized via SDL
+	// Close everything initialized via SDL
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 
